@@ -129,9 +129,10 @@
                 id="custom-alias-input" 
                 placeholder="Enter your custom alias..."
                 class="w-full px-6 py-4 border-0 rounded-xl focus:ring-2 focus:ring-primary/50 focus:outline-none text-lg"
-                oninput="updateLivePreview()"
+                oninput="sanitizeAliasInput(this)"
               >
               <button 
+                id="create-custom-url-btn"
                 onclick="generateCustomUrl()"
                 class="bg-primary text-white px-8 py-4 rounded-xl hover:bg-secondary transition-all transform hover:scale-105 active:scale-95 text-lg font-medium shadow-lg"
               >
@@ -330,166 +331,164 @@
   <script>
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
     });
 
     // Real-time alias sanitization
     function sanitizeAliasInput(input) {
-        const originalValue = input.value;
-        const sanitizedValue = originalValue
-            .replace(/[^a-zA-Z0-9_-]/g, '-')
-            .toLowerCase()
-            .substring(0, 50); // Enforce max length
-        input.value = sanitizedValue;
-        updateLivePreview();
+      const originalValue = input.value;
+      const sanitizedValue = originalValue
+        .replace(/[^a-zA-Z0-9_-]/g, '-')
+        .toLowerCase()
+        .substring(0, 50); // Enforce max length
+      input.value = sanitizedValue;
+      updateLivePreview();
     }
 
     // Live preview updater
     function updateLivePreview() {
-        const aliasInput = document.getElementById('custom-alias-input');
-        const livePreviewContainer = document.getElementById('live-preview-container');
-        const livePreviewText = document.getElementById('live-preview-text');
-        
-        if (aliasInput.value) {
-            livePreviewText.textContent = `${window.location.origin}/${aliasInput.value}`;
-            livePreviewContainer.classList.remove('hidden');
-        } else {
-            livePreviewContainer.classList.add('hidden');
-        }
+      const aliasInput = document.getElementById('custom-alias-input');
+      const livePreviewContainer = document.getElementById('live-preview-container');
+      const livePreviewText = document.getElementById('live-preview-text');
+      
+      if (aliasInput.value) {
+        livePreviewText.textContent = `${window.location.origin}/${aliasInput.value}`;
+        livePreviewContainer.classList.remove('hidden');
+      } else {
+        livePreviewContainer.classList.add('hidden');
+        livePreviewText.textContent = "";
+      }
     }
 
     // URL creation with enhanced error handling
     async function generateCustomUrl() {
-        const elements = {
-            originalInput: document.getElementById('default-url-input'),
-            aliasInput: document.getElementById('custom-alias-input'),
-            defaultError: document.getElementById('default-url-error'),
-            customError: document.getElementById('custom-error-message'),
-            resultContainer: document.getElementById('custom-result-container'),
-            shortUrlInput: document.getElementById('custom-short-url'),
-            createButton: document.getElementById('create-custom-url-btn')
-        };
+      const elements = {
+        originalInput: document.getElementById('default-url-input'),
+        aliasInput: document.getElementById('custom-alias-input'),
+        defaultError: document.getElementById('default-url-error'),
+        customError: document.getElementById('custom-error-message'),
+        resultContainer: document.getElementById('custom-result-container'),
+        shortUrlInput: document.getElementById('custom-short-url'),
+        createButton: document.getElementById('create-custom-url-btn')
+      };
 
-        // Clear previous states
-        elements.defaultError.classList.add('hidden');
-        elements.customError.classList.add('hidden');
-        elements.resultContainer.classList.add('hidden');
+      // Clear previous states
+      elements.defaultError.classList.add('hidden');
+      elements.customError.classList.add('hidden');
+      elements.resultContainer.classList.add('hidden');
 
-        // Validate inputs
-        let valid = true;
-        const originalUrl = elements.originalInput.value.trim();
-        const alias = elements.aliasInput.value.trim();
+      // Validate inputs
+      let valid = true;
+      const originalUrl = elements.originalInput.value.trim();
+      const alias = elements.aliasInput.value.trim();
 
-        // URL validation
-        try {
-            const url = new URL(originalUrl);
-            if (!['http:', 'https:'].includes(url.protocol)) {
-                throw new Error('Invalid protocol');
-            }
-        } catch (error) {
-            elements.defaultError.textContent = "Please enter a valid URL starting with http:// or https://";
-            elements.defaultError.classList.remove('hidden');
-            valid = false;
+      // URL validation
+      try {
+        const url = new URL(originalUrl);
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          throw new Error('Invalid protocol');
+        }
+      } catch (error) {
+        elements.defaultError.textContent = "Please enter a valid URL starting with http:// or https://";
+        elements.defaultError.classList.remove('hidden');
+        valid = false;
+      }
+
+      // Alias validation
+      const aliasRegex = /^[a-z0-9_-]{3,50}$/;
+      if (!aliasRegex.test(alias)) {
+        elements.customError.textContent = "Alias must be 3-50 characters using only: a-z, 0-9, -, _";
+        elements.customError.classList.remove('hidden');
+        elements.aliasInput.classList.add('animate-shake');
+        setTimeout(() => elements.aliasInput.classList.remove('animate-shake'), 500);
+        valid = false;
+      }
+
+      if (!valid) return;
+
+      // API request
+      try {
+        // Show loading state
+        elements.createButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating...`;
+        elements.createButton.disabled = true;
+
+        const response = await fetch('/api/create', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            original_url: originalUrl,
+            custom_alias: alias
+          })
+        });
+
+        const responseData = await response.json();
+
+        if (!response.ok) {
+          const errorMessage = responseData.error || `Request failed with status ${response.status}`;
+          throw new Error(errorMessage);
         }
 
-        // Alias validation
-        const aliasRegex = /^[a-z0-9_-]{3,50}$/;
-        if (!aliasRegex.test(alias)) {
-            elements.customError.textContent = "Alias must be 3-50 characters using only: a-z, 0-9, -, _";
-            elements.customError.classList.remove('hidden');
-            elements.aliasInput.classList.add('animate-shake');
-            setTimeout(() => elements.aliasInput.classList.remove('animate-shake'), 500);
-            valid = false;
-        }
+        // Show success
+        elements.shortUrlInput.value = `${window.location.origin}/${alias}`;
+        elements.resultContainer.classList.remove('hidden');
+        window.scrollTo({
+          top: elements.resultContainer.offsetTop - 100,
+          behavior: 'smooth'
+        });
 
-        if (!valid) return;
-
-        // API request
-        try {
-            // Show loading state
-            elements.createButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating...`;
-            elements.createButton.disabled = true;
-
-            const response = await fetch('/api/create', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    original_url: originalUrl,
-                    custom_alias: alias
-                })
-            });
-
-            const responseData = await response.json();
-
-            if (!response.ok) {
-                const errorMessage = responseData.error || `Request failed with status ${response.status}`;
-                throw new Error(errorMessage);
-            }
-
-            // Show success
-            elements.shortUrlInput.value = `${window.location.origin}/${alias}`;
-            elements.resultContainer.classList.remove('hidden');
-            window.scrollTo({
-                top: elements.resultContainer.offsetTop - 100,
-                behavior: 'smooth'
-            });
-
-        } catch (error) {
-            console.error("API Error:", error);
-            elements.customError.textContent = error.message.includes('NetworkError') 
-                ? "Network issue - check connection"
-                : error.message;
-            elements.customError.classList.remove('hidden');
-        } finally {
-            // Reset button
-            elements.createButton.innerHTML = `Create Custom URL`;
-            elements.createButton.disabled = false;
-        }
+      } catch (error) {
+        console.error("API Error:", error);
+        elements.customError.textContent = error.message.includes('NetworkError') 
+          ? "Network issue - check connection"
+          : error.message;
+        elements.customError.classList.remove('hidden');
+      } finally {
+        // Reset button
+        elements.createButton.innerHTML = `Create Custom URL`;
+        elements.createButton.disabled = false;
+      }
     }
 
     // Clipboard function
     async function copyCustomUrl() {
+      try {
         const shortUrl = document.getElementById('custom-short-url');
+        await navigator.clipboard.writeText(shortUrl.value);
         const successElement = document.getElementById('custom-copy-success');
-        
-        try {
-            await navigator.clipboard.writeText(shortUrl.value);
-            successElement.style.opacity = '1';
-            setTimeout(() => successElement.style.opacity = '0', 2000);
-        } catch (err) {
-            shortUrl.select();
-            document.execCommand('copy');
-            successElement.style.opacity = '1';
-            setTimeout(() => successElement.style.opacity = '0', 2000);
-        }
+        successElement.style.opacity = '1';
+        setTimeout(() => successElement.style.opacity = '0', 2000);
+      } catch (err) {
+        alert('Failed to copy URL. Please copy manually.');
+      }
     }
 
-    // Contact form handler
+    // Handle custom contact form submission
     function handleCustomContactSubmit(event) {
-        event.preventDefault();
-        const form = event.target;
-        const submitButton = form.querySelector('button[type="submit"]');
-        
-        submitButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sending...`;
-        submitButton.disabled = true;
-
-        // Simulated API call
-        setTimeout(() => {
-            submitButton.innerHTML = `<i class="fas fa-paper-plane"></i> Send Message`;
-            submitButton.disabled = false;
-            form.reset();
-            alert('Thank you for your message! We\'ll respond within 24 hours.');
-        }, 1500);
+      event.preventDefault();
+      const form = event.target;
+      const submitButton = form.querySelector('button[type="submit"]');
+      
+      submitButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sending...`;
+      submitButton.disabled = true;
+  
+      setTimeout(() => {
+        submitButton.innerHTML = `<i class="fas fa-paper-plane"></i> Send Message`;
+        submitButton.disabled = false;
+        form.reset();
+        alert('Thank you for your message! We\'ll respond within 24 hours.');
+      }, 1500);
+  
+      return false;
     }
-</script>
+  </script>
 </body>
 </html>
