@@ -55,10 +55,10 @@ app.get('/:alias', async (req, res) => {
   console.log(`Received alias: ${alias}`);
   
   try {
-    // Select both original_url and short_url to disambiguate.
+    // Select all columns to avoid ambiguity and then filter on the short_url column.
     const { data, error } = await supabase
       .from('urls')
-      .select('original_url, short_url')
+      .select('*')
       .eq('short_url', alias)
       .maybeSingle();
 
