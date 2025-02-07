@@ -16,11 +16,11 @@ app.get('/:alias', (req, res) => {
   console.log(`Received alias: ${alias}`);
   
   // Here you could look up the alias in your database.
-  // For testing, we simply redirect all aliases to your Vercel URL.
+  // For testing, we simply redirect all aliases to a fixed URL.
   if (alias) {
-    const vercelUrl = `https://ur-lcustom.vercel.app/${alias}`;
-    console.log(`Redirecting to ${vercelUrl}`);
-    res.redirect(vercelUrl);
+    const targetUrl = `https://example.com/${alias}`; // Replace with your target URL
+    console.log(`Redirecting to ${targetUrl}`);
+    res.redirect(targetUrl);
   } else {
     console.log(`Alias not found`);
     res.status(404).send('Alias not found');
