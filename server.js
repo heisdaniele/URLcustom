@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const path = require('path');
 const app = express();
@@ -18,10 +17,15 @@ app.get('/:alias', (req, res) => {
   
   // Here you could look up the alias in your database.
   // For testing, we simply redirect all aliases to example.com.
-  res.redirect('https://www.example.com');
+  if (alias) {
+    console.log(`Redirecting to https://www.example.com`);
+    res.redirect('https://www.example.com');
+  } else {
+    console.log(`Alias not found`);
+    res.status(404).send('Alias not found');
+  }
 });
 
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });
-
