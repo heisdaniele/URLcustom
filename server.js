@@ -31,10 +31,21 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Routes
+
+// Health check endpoint (placed before the catch-all alias route)
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Serve the custom.html file at the root URL
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'custom.html'));
 });
 
+// POST endpoint to create a new URL record (custom alias creation)
 app.post('/api/create', async (req, res) => {
   try {
     const { original_url, custom_alias } = req.body;
@@ -76,6 +87,7 @@ app.post('/api/create', async (req, res) => {
   }
 });
 
+// GET endpoint to handle custom alias redirection dynamically via Supabase
 app.get('/:alias', async (req, res) => {
   try {
     const { alias } = req.params;
@@ -106,7 +118,7 @@ app.get('/:alias', async (req, res) => {
 
     if (updateError) {
       console.error('Error updating click count:', updateError);
-      // Optionally, you might continue with the redirect even if updating fails.
+      // Optionally, continue with the redirect even if the update fails.
     }
 
     console.log(`Redirecting to ${data.original_url}`);
@@ -116,14 +128,6 @@ app.get('/:alias', async (req, res) => {
     console.error('Redirect Error:', error);
     res.status(500).send('Internal Server Error');
   }
-});
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok',
-    timestamp: new Date().toISOString()
-  });
 });
 
 // Global error handling middleware
