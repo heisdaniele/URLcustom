@@ -10,7 +10,7 @@ const app = express();
 app.use(cors({
   origin: [
     process.env.CLIENT_URL || 'http://localhost:3000',
-    'https://ur-lcustom.vercel.app'
+    'https://your-vercel-app.vercel.app'
   ],
   methods: ['GET', 'POST']
 }));
