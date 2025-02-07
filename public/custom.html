@@ -335,25 +335,30 @@
         document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
       });
     });
+// New: Sanitize alias input in real-time
+function sanitizeAliasInput(input) {
+      // Remove invalid characters and enforce lowercase
+      input.value = input.value
+        .replace(/[^a-zA-Z0-9_-]/g, '-') 
+        .toLowerCase();
+      updateLivePreview();
+    }
 
-    // Update live preview as the user types the custom alias
+    // Updated live preview function
     function updateLivePreview() {
-      const aliasInput = document.getElementById('custom-alias-input').value.trim();
-      // Replace spaces with hyphens and convert to lower case
-      const sanitizedAlias = aliasInput.replace(/\s+/g, "-").toLowerCase();
+      const aliasInput = document.getElementById('custom-alias-input').value;
       const livePreviewContainer = document.getElementById('live-preview-container');
       const livePreviewText = document.getElementById('live-preview-text');
       
-      if (sanitizedAlias) {
-        livePreviewText.textContent = window.location.origin + "/" + sanitizedAlias;
+      if (aliasInput) {
+        livePreviewText.textContent = `${window.location.origin}/${aliasInput}`;
         livePreviewContainer.classList.remove('hidden');
       } else {
         livePreviewContainer.classList.add('hidden');
-        livePreviewText.textContent = "";
       }
     }
 
-    // Custom URL generation logic that calls the POST endpoint
+    // Improved URL generation with proper error handling
     async function generateCustomUrl() {
       const originalUrlInput = document.getElementById('default-url-input').value.trim();
       let aliasInput = document.getElementById('custom-alias-input').value.trim();
@@ -361,29 +366,45 @@
       const customErrorMessage = document.getElementById('custom-error-message');
       const resultContainer = document.getElementById('custom-result-container');
       const shortUrlInput = document.getElementById('custom-short-url');
+      const createButton = document.getElementById('create-custom-url-btn');
+
+      // Clear previous errors and results
+      defaultUrlError.classList.add('hidden');
+      customErrorMessage.classList.add('hidden');
+      resultContainer.classList.add('hidden');
 
       // Validate original URL
-      if (!originalUrlInput) {
-        defaultUrlError.textContent = "Please paste your original URL.";
+      try {
+        new URL(originalUrlInput);
+      } catch {
+        defaultUrlError.textContent = "Please enter a valid URL (e.g., https://example.com)";
         defaultUrlError.classList.remove('hidden');
-        resultContainer.classList.add('hidden');
         return;
-      } else {
-        defaultUrlError.classList.add('hidden');
       }
 
-      // Validate and sanitize custom alias
+      // Validate custom alias
       if (!aliasInput) {
         customErrorMessage.textContent = "Please enter a custom alias.";
         customErrorMessage.classList.remove('hidden');
-        resultContainer.classList.add('hidden');
         return;
-      } else {
-        aliasInput = aliasInput.replace(/\s+/g, "-").toLowerCase();
-        customErrorMessage.classList.add('hidden');
+      }
+
+      const aliasRegex = /^[a-z0-9_-]{3,50}$/;
+      if (!aliasRegex.test(aliasInput)) {
+        customErrorMessage.textContent = "Alias must be 3-50 characters and can only contain: a-z, 0-9, -, _";
+        customErrorMessage.classList.remove('hidden');
+        document.getElementById('custom-alias-input').classList.add('animate-shake');
+        setTimeout(() => {
+          document.getElementById('custom-alias-input').classList.remove('animate-shake');
+        }, 500);
+        return;
       }
 
       try {
+        // Show loading state
+        createButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating...`;
+        createButton.disabled = true;
+
         const response = await fetch('/api/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -392,22 +413,44 @@
             custom_alias: aliasInput
           })
         });
+
         const result = await response.json();
+
         if (!response.ok) {
-          alert(result.error || "An error occurred while creating your URL.");
+          if (response.status === 409) {
+            customErrorMessage.textContent = "This alias is already taken. Please try another one.";
+            customErrorMessage.classList.remove('hidden');
+            document.getElementById('custom-alias-input').classList.add('animate-shake');
+            setTimeout(() => {
+              document.getElementById('custom-alias-input').classList.remove('animate-shake');
+            }, 500);
+          } else {
+            customErrorMessage.textContent = result.error || "Failed to create custom URL. Please try again.";
+            customErrorMessage.classList.remove('hidden');
+          }
           return;
         }
-        // Construct final URL based on the current window location origin
-        const finalUrl = window.location.origin + "/" + aliasInput;
-        shortUrlInput.value = finalUrl;
+
+        // Show success result
+        shortUrlInput.value = result.data.short_url;
         resultContainer.classList.remove('hidden');
+        window.scrollTo({
+          top: resultContainer.offsetTop - 100,
+          behavior: 'smooth'
+        });
+
       } catch (error) {
         console.error("Error creating custom URL:", error);
-        alert("An error occurred while creating your URL.");
+        customErrorMessage.textContent = "Network error. Please check your connection.";
+        customErrorMessage.classList.remove('hidden');
+      } finally {
+        // Reset button state
+        createButton.innerHTML = `Create Custom URL`;
+        createButton.disabled = false;
       }
     }
-    
-    // Clipboard copy for the custom URL
+
+    // Clipboard copy function
     async function copyCustomUrl() {
       try {
         await navigator.clipboard.writeText(document.getElementById('custom-short-url').value);
