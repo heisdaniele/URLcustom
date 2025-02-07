@@ -55,11 +55,11 @@ app.get('/:alias', async (req, res) => {
   console.log(`Received alias: ${alias}`);
   
   try {
-    // Use maybeSingle() so that if no record is found, it returns null
+    // Qualify the column name to avoid ambiguity by using "urls.short_url"
     const { data, error } = await supabase
       .from('urls')
       .select('original_url')
-      .eq('short_url', alias)
+      .eq('urls.short_url', alias)
       .maybeSingle();
 
     if (error) {
