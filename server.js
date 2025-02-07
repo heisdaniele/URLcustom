@@ -31,21 +31,10 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Routes
-
-// Health check endpoint (placed before the catch-all alias route)
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Serve the custom.html file at the root URL
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'custom.html'));
 });
 
-// POST endpoint to create a new URL record (custom alias creation)
 app.post('/api/create', async (req, res) => {
   try {
     const { original_url, custom_alias } = req.body;
@@ -87,17 +76,17 @@ app.post('/api/create', async (req, res) => {
   }
 });
 
-// GET endpoint to handle custom alias redirection dynamically via Supabase
+// GET endpoint to handle custom alias redirection with atomic click count update
 app.get('/:alias', async (req, res) => {
   try {
     const { alias } = req.params;
     console.log(`Received alias: ${alias}`);
     
     // Query Supabase for the URL record that matches the alias.
-    // Select both original_url and click_count.
+    // Select only the original_url since that's what we need for redirection.
     const { data, error } = await supabase
       .from('urls')
-      .select('original_url, click_count')
+      .select('original_url')
       .eq('short_url', alias)
       .single();
 
@@ -109,16 +98,11 @@ app.get('/:alias', async (req, res) => {
       `);
     }
 
-    // Increment the click count
-    const newClickCount = data.click_count + 1;
-    const { error: updateError } = await supabase
-      .from('urls')
-      .update({ click_count: newClickCount })
-      .eq('short_url', alias);
-
-    if (updateError) {
-      console.error('Error updating click count:', updateError);
-      // Optionally, continue with the redirect even if the update fails.
+    // Atomically increment the click count using the RPC function.
+    const { error: rpcError } = await supabase.rpc('increment_click_count', { p_alias: alias });
+    if (rpcError) {
+      console.error('Error incrementing click count:', rpcError);
+      // Optionally continue with the redirect even if the click count update fails.
     }
 
     console.log(`Redirecting to ${data.original_url}`);
@@ -128,6 +112,14 @@ app.get('/:alias', async (req, res) => {
     console.error('Redirect Error:', error);
     res.status(500).send('Internal Server Error');
   }
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Global error handling middleware
