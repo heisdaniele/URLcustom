@@ -10,7 +10,7 @@ const app = express();
 app.use(cors({
   origin: [
     process.env.CLIENT_URL || 'http://localhost:3000',
-    'https://your-vercel-app.vercel.app'
+    'https://ur-lcustom.vercel.app'
   ],
   methods: ['GET', 'POST']
 }));
@@ -45,6 +45,8 @@ app.post('/api/create', async (req, res) => {
       });
     }
 
+    // Call the Supabase RPC function to create a custom link.
+    // This assumes you have created a function named "create_custom_link" in your Supabase SQL.
     const { data, error } = await supabase.rpc('create_custom_link', {
       p_original_url: original_url,
       p_alias: custom_alias
@@ -77,26 +79,37 @@ app.post('/api/create', async (req, res) => {
 app.get('/:alias', async (req, res) => {
   try {
     const { alias } = req.params;
+    console.log(`Received alias: ${alias}`);
     
+    // Query Supabase for the URL record that matches the alias.
+    // Select both original_url and click_count.
     const { data, error } = await supabase
       .from('urls')
-      .select('original_url')
+      .select('original_url, click_count')
       .eq('short_url', alias)
       .single();
 
     if (error || !data) {
+      console.log(`Alias not found: ${alias}`);
       return res.status(404).send(`
         <h1>Link not found</h1>
         <p>The requested short URL does not exist</p>
       `);
     }
 
-    // Update click count
-    await supabase
+    // Increment the click count
+    const newClickCount = data.click_count + 1;
+    const { error: updateError } = await supabase
       .from('urls')
-      .update({ click_count: supabase.rpc('increment') })
+      .update({ click_count: newClickCount })
       .eq('short_url', alias);
 
+    if (updateError) {
+      console.error('Error updating click count:', updateError);
+      // Optionally, you might continue with the redirect even if updating fails.
+    }
+
+    console.log(`Redirecting to ${data.original_url}`);
     res.redirect(data.original_url);
 
   } catch (error) {
@@ -113,7 +126,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Error handling middleware
+// Global error handling middleware
 app.use((err, req, res, next) => {
   console.error('Global Error:', err);
   res.status(500).json({
@@ -122,10 +135,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Export for Vercel
+// Export for Vercel deployment
 module.exports = app;
 
-// Local development
+// Local development: start the server if not in production
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
