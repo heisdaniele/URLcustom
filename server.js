@@ -3,7 +3,6 @@ const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
 
-// Initialize Express app
 const app = express();
 
 // Configure middleware
@@ -31,19 +30,23 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Routes
+
+// Serve custom.html at the root URL
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'custom.html'));
 });
 
+// POST endpoint to create a new custom link
 app.post('/api/create', async (req, res) => {
   try {
     const { original_url, custom_alias } = req.body;
-
+    
     if (!original_url || !custom_alias) {
       return res.status(400).json({ error: 'Missing required fields: original_url and custom_alias' });
     }
 
-    // Call the Supabase RPC function to create a custom link
+    // Call the Supabase RPC function to create a custom link.
+    // This assumes you have created a function named "create_custom_link" in your Supabase SQL.
     const { data, error } = await supabase.rpc('create_custom_link', {
       p_original_url: original_url,
       p_alias: custom_alias
@@ -76,7 +79,7 @@ app.get('/:alias', async (req, res) => {
     const { alias } = req.params;
     console.log(`Received alias: ${alias}`);
     
-    // Query Supabase for the URL record that matches the alias
+    // Query Supabase for the URL record matching the alias (select original_url)
     const { data, error } = await supabase
       .from('urls')
       .select('original_url')
@@ -94,8 +97,10 @@ app.get('/:alias', async (req, res) => {
     // Atomically increment the click count using the RPC function
     const { error: rpcError } = await supabase.rpc('increment_click_count', { p_alias: alias });
     if (rpcError) {
-      console.error('Error incrementing click count:', rpcError);
-      // Optionally continue with the redirect even if the click count update fails
+      console.error('Error incrementing click count via RPC:', rpcError);
+      // Optionally continue with redirect even if update fails.
+    } else {
+      console.log(`Click count incremented for alias: ${alias}`);
     }
 
     console.log(`Redirecting to ${data.original_url}`);
