@@ -98,12 +98,13 @@ app.get('/:alias', async (req, res) => {
     }
 
     // Atomically increment the click count using the RPC function for custom URLs.
-    const { error: rpcError } = await supabase.rpc('increment_click_count_custom', { p_alias: alias });
+    // Using a case-insensitive comparison in the RPC function.
+    const { data: newClickCount, error: rpcError } = await supabase.rpc('increment_click_count_custom', { p_alias: alias });
     if (rpcError) {
       console.error('Error incrementing click count via RPC:', rpcError);
-      // Optionally, continue with the redirect even if the click count update fails.
+      // Optionally, continue with the redirect even if the update fails.
     } else {
-      console.log(`Click count incremented for alias: ${alias}`);
+      console.log(`New click count for alias ${alias}:`, newClickCount);
     }
 
     console.log(`Redirecting to ${data.original_url}`);
