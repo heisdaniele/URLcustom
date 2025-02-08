@@ -101,7 +101,7 @@ app.get('/:alias', async (req, res) => {
     const { error: rpcError } = await supabase.rpc('increment_click_count_custom', { p_alias: alias });
     if (rpcError) {
       console.error('Error incrementing click count via RPC:', rpcError);
-      // Optionally, continue with the redirect even if the update fails.
+      // Optionally, continue with the redirect even if the click count update fails.
     } else {
       console.log(`Click count incremented for alias: ${alias}`);
     }
