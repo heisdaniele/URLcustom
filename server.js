@@ -36,18 +36,20 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'custom.html'));
 });
 
-// POST endpoint to create a new custom link
+// POST endpoint to create a new custom URL record (in custom_urls table)
 app.post('/api/create', async (req, res) => {
   try {
     const { original_url, custom_alias } = req.body;
     
     if (!original_url || !custom_alias) {
-      return res.status(400).json({ error: 'Missing required fields: original_url and custom_alias' });
+      return res.status(400).json({ 
+        error: 'Missing required fields: original_url and custom_alias' 
+      });
     }
 
-    // Call the Supabase RPC function to create a custom link.
-    // This assumes you have created a function named "create_custom_link" in your Supabase SQL.
-    const { data, error } = await supabase.rpc('create_custom_link', {
+    // Call the Supabase RPC function to create a custom link in the custom_urls table.
+    // This assumes you have a function "create_custom_link_custom" in Supabase.
+    const { data, error } = await supabase.rpc('create_custom_link_custom', {
       p_original_url: original_url,
       p_alias: custom_alias
     });
@@ -73,17 +75,18 @@ app.post('/api/create', async (req, res) => {
   }
 });
 
-// GET endpoint to handle custom alias redirection with atomic click count update
+// GET endpoint to handle custom alias redirection with atomic click count update (using custom_urls)
 app.get('/:alias', async (req, res) => {
   try {
     const { alias } = req.params;
     console.log(`Received alias: ${alias}`);
     
-    // Query Supabase for the URL record matching the alias (select original_url)
+    // Query Supabase for the URL record in custom_urls that matches the alias.
+    // Assuming the column storing the alias in custom_urls is named "custom_alias".
     const { data, error } = await supabase
-      .from('urls')
+      .from('custom_urls')
       .select('original_url')
-      .eq('short_url', alias)
+      .eq('custom_alias', alias)
       .single();
 
     if (error || !data) {
@@ -94,11 +97,11 @@ app.get('/:alias', async (req, res) => {
       `);
     }
 
-    // Atomically increment the click count using the RPC function
-    const { error: rpcError } = await supabase.rpc('increment_click_count', { p_alias: alias });
+    // Atomically increment the click count using the RPC function for custom URLs.
+    const { error: rpcError } = await supabase.rpc('increment_click_count_custom', { p_alias: alias });
     if (rpcError) {
       console.error('Error incrementing click count via RPC:', rpcError);
-      // Optionally continue with redirect even if update fails.
+      // Optionally, continue with the redirect even if the update fails.
     } else {
       console.log(`Click count incremented for alias: ${alias}`);
     }
