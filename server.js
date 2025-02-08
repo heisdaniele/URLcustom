@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
@@ -16,50 +17,45 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Validate environment variables before initializing Supabase
+// Validate environment variables
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase credentials - check environment variables');
+  throw new Error('Missing Supabase credentials');
 }
 
-// Initialize Supabase client
+// Initialize Supabase
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: { persistSession: false }
 });
 
 // Routes
-
-// Serve custom.html at the root URL
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'custom.html'));
 });
 
-// POST endpoint to create a new custom URL record (in custom_urls table)
 app.post('/api/create', async (req, res) => {
   try {
     const { original_url, custom_alias } = req.body;
     
     if (!original_url || !custom_alias) {
       return res.status(400).json({ 
-        error: 'Missing required fields: original_url and custom_alias' 
+        error: 'Missing required fields' 
       });
     }
 
-    // Call the Supabase RPC function to create a custom link in the custom_urls table.
-    // This assumes you have a function "create_custom_link_custom" in Supabase.
     const { data, error } = await supabase.rpc('create_custom_link_custom', {
       p_original_url: original_url,
       p_alias: custom_alias
     });
 
     if (error) {
-      if (error.code === '23505') {
-        return res.status(409).json({ error: 'Alias already exists. Please try another.' });
-      }
-      console.error('Supabase RPC Error:', error);
-      return res.status(500).json({ error: error.message });
+      return res.status(error.code === '23505' ? 409 : 500).json({
+        error: error.code === '23505' 
+          ? 'Alias already exists' 
+          : 'Creation failed'
+      });
     }
 
     res.status(201).json({
@@ -75,14 +71,11 @@ app.post('/api/create', async (req, res) => {
   }
 });
 
-// GET endpoint to handle custom alias redirection with atomic click count update (using custom_urls)
 app.get('/:alias', async (req, res) => {
   try {
     const { alias } = req.params;
-    console.log(`Received alias: ${alias}`);
     
-    // Query Supabase for the URL record in custom_urls that matches the alias.
-    // Assuming the column storing the alias in custom_urls is named "custom_alias".
+    // Get URL with exact case match
     const { data, error } = await supabase
       .from('custom_urls')
       .select('original_url')
@@ -90,24 +83,22 @@ app.get('/:alias', async (req, res) => {
       .single();
 
     if (error || !data) {
-      console.log(`Alias not found: ${alias}`);
       return res.status(404).send(`
         <h1>Link not found</h1>
         <p>The requested short URL does not exist</p>
       `);
     }
 
-    // Atomically increment the click count using the RPC function for custom URLs.
-    // Using a case-insensitive comparison in the RPC function.
-    const { data: newClickCount, error: rpcError } = await supabase.rpc('increment_click_count_custom', { p_alias: alias });
+    // Atomic increment with exact case match
+    const { error: rpcError } = await supabase.rpc(
+      'increment_click_count_custom', 
+      { p_alias: alias }
+    );
+
     if (rpcError) {
-      console.error('Error incrementing click count via RPC:', rpcError);
-      // Optionally, continue with the redirect even if the update fails.
-    } else {
-      console.log(`New click count for alias ${alias}:`, newClickCount);
+      console.error('Click count error:', rpcError);
     }
 
-    console.log(`Redirecting to ${data.original_url}`);
     res.redirect(data.original_url);
 
   } catch (error) {
@@ -116,7 +107,7 @@ app.get('/:alias', async (req, res) => {
   }
 });
 
-// Health check endpoint
+// Health check
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok',
@@ -124,7 +115,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Global error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
   console.error('Global Error:', err);
   res.status(500).json({
@@ -133,14 +124,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Export for Vercel deployment
-module.exports = app;
-
-// Local development: start the server if not in production
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Supabase connected to: ${supabaseUrl}`);
-  });
-}
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Supabase connected to: ${supabaseUrl}`);
+});
