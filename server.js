@@ -38,26 +38,23 @@ app.get('/', (req, res) => {
 app.post('/api/create', async (req, res) => {
   try {
     const { original_url, custom_alias } = req.body;
-    
+
     if (!original_url || !custom_alias) {
-      return res.status(400).json({ 
-        error: 'Missing required fields: original_url and custom_alias' 
-      });
+      return res.status(400).json({ error: 'Missing required fields: original_url and custom_alias' });
     }
 
-    // Call the Supabase RPC function to create a custom link.
-    // This assumes you have created a function named "create_custom_link" in your Supabase SQL.
+    // Call the Supabase RPC function to create a custom link
     const { data, error } = await supabase.rpc('create_custom_link', {
       p_original_url: original_url,
       p_alias: custom_alias
     });
 
     if (error) {
+      if (error.code === '23505') {
+        return res.status(409).json({ error: 'Alias already exists. Please try another.' });
+      }
       console.error('Supabase RPC Error:', error);
-      return res.status(409).json({ 
-        error: error.message,
-        code: error.code || 'CONFLICT'
-      });
+      return res.status(500).json({ error: error.message });
     }
 
     res.status(201).json({
@@ -69,10 +66,7 @@ app.post('/api/create', async (req, res) => {
 
   } catch (error) {
     console.error('API Error:', error);
-    res.status(500).json({ 
-      error: 'Internal server error',
-      code: 'SERVER_ERROR'
-    });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -82,8 +76,7 @@ app.get('/:alias', async (req, res) => {
     const { alias } = req.params;
     console.log(`Received alias: ${alias}`);
     
-    // Query Supabase for the URL record that matches the alias.
-    // Select only the original_url since that's what we need for redirection.
+    // Query Supabase for the URL record that matches the alias
     const { data, error } = await supabase
       .from('urls')
       .select('original_url')
@@ -98,11 +91,11 @@ app.get('/:alias', async (req, res) => {
       `);
     }
 
-    // Atomically increment the click count using the RPC function.
+    // Atomically increment the click count using the RPC function
     const { error: rpcError } = await supabase.rpc('increment_click_count', { p_alias: alias });
     if (rpcError) {
       console.error('Error incrementing click count:', rpcError);
-      // Optionally continue with the redirect even if the click count update fails.
+      // Optionally continue with the redirect even if the click count update fails
     }
 
     console.log(`Redirecting to ${data.original_url}`);
