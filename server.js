@@ -39,8 +39,8 @@ app.get('/', (req, res) => {
 // API endpoint to create a custom URL
 app.post('/api/create', async (req, res) => {
   try {
-    // Destructure the required fields; ip_info is optional
-    const { original_url, custom_alias, ip_info } = req.body;
+    // Destructure the required fields; note: we removed ip_info since it's not used in RPC
+    const { original_url, custom_alias } = req.body;
     
     if (!original_url || !custom_alias) {
       return res.status(400).json({ 
@@ -55,6 +55,7 @@ app.post('/api/create', async (req, res) => {
     });
 
     if (error) {
+      console.error('Supabase RPC Error:', error);
       return res.status(error.code === '23505' ? 409 : 500).json({
         error: error.code === '23505' 
           ? 'Alias already exists' 
@@ -69,7 +70,6 @@ app.post('/api/create', async (req, res) => {
         short_url: `${req.headers.host}/${custom_alias}`
       }
     });
-
   } catch (error) {
     console.error('API Error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -120,7 +120,6 @@ app.get('/:alias', async (req, res) => {
 
     // Redirect to the original URL
     res.redirect(data.original_url);
-
   } catch (error) {
     console.error('Redirect Error:', error);
     res.status(500).send('Internal Server Error');
