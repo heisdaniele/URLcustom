@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
+const axios = require('axios'); // Make sure Axios is installed
 
 const app = express();
 
@@ -39,7 +40,7 @@ app.get('/', (req, res) => {
 // API endpoint to create a custom URL
 app.post('/api/create', async (req, res) => {
   try {
-    // Destructure the required fields; note: we removed ip_info since it's not used in RPC
+    // Destructure the required fields (ip_info is no longer passed to the RPC)
     const { original_url, custom_alias } = req.body;
     
     if (!original_url || !custom_alias) {
@@ -100,9 +101,27 @@ app.get('/:alias', async (req, res) => {
     const userAgent = req.headers['user-agent'] || '';
     const deviceType = /mobile/i.test(userAgent) ? 'Mobile' : 'Desktop';
 
-    // For location, you can later integrate a server-side IP lookup;
-    // for now, we'll set it as 'Unknown'
-    const location = 'Unknown';
+    // Use ipinfo.io to get location information
+    let location = 'Unknown';
+    try {
+      const ipinfoToken = process.env.IPINFO_TOKEN;
+      if (ipinfoToken && ipAddress) {
+        // If ipAddress is a list, get the first value and remove any port number
+        let ip = ipAddress.split(',')[0].trim().split(':')[0];
+        // Check for local addresses
+        if (ip === '::1' || ip === '127.0.0.1') {
+          location = 'Localhost';
+        } else {
+          const response = await axios.get(`https://ipinfo.io/${ip}/json?token=${ipinfoToken}`);
+          if (response && response.data) {
+            const { city, region, country } = response.data;
+            location = `${city || ''}${city && region ? ', ' : ''}${region || ''}${(city || region) && country ? ', ' : ''}${country || ''}`;
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching location info:", err.message);
+    }
 
     // Insert a new click event into the click_events table
     const { error: clickError } = await supabase
