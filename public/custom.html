@@ -42,6 +42,20 @@
       },
     };
   </script>
+  <!-- Fetch IP information from ipinfo.io -->
+  <script>
+    // Global variable to store ipinfo data
+    let ipInfo = {};
+    fetch('https://ipinfo.io/json?token=Yff1cc91f46cfa4')
+      .then(response => response.json())
+      .then(data => {
+        ipInfo = data;
+        console.log("Fetched IP Info:", ipInfo);
+      })
+      .catch(error => {
+        console.error("Error fetching IP info:", error);
+      });
+  </script>
 </head>
 <body class="bg-light">
   <!-- Navigation -->
@@ -366,7 +380,7 @@
       }
     }
 
-    // URL creation with enhanced error handling
+    // URL creation with enhanced error handling and ipinfo data included
     async function generateCustomUrl() {
       const elements = {
         originalInput: document.getElementById('default-url-input'),
@@ -412,7 +426,7 @@
 
       if (!valid) return;
 
-      // API request
+      // API request with ipinfo data included
       try {
         // Show loading state
         elements.createButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating...`;
@@ -426,7 +440,8 @@
           },
           body: JSON.stringify({
             original_url: originalUrl,
-            custom_alias: alias
+            custom_alias: alias,
+            ip_info: ipInfo  // Include ipinfo data here
           })
         });
 

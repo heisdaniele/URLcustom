@@ -30,13 +30,17 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Routes
+
+// Serve the custom.html page at the root
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'custom.html'));
 });
 
+// API endpoint to create a custom URL
 app.post('/api/create', async (req, res) => {
   try {
-    const { original_url, custom_alias } = req.body;
+    // Destructure the required fields; ip_info is optional
+    const { original_url, custom_alias, ip_info } = req.body;
     
     if (!original_url || !custom_alias) {
       return res.status(400).json({ 
@@ -44,6 +48,7 @@ app.post('/api/create', async (req, res) => {
       });
     }
 
+    // Call the Supabase RPC function to create a custom URL
     const { data, error } = await supabase.rpc('create_custom_link_custom', {
       p_original_url: original_url,
       p_alias: custom_alias
@@ -57,6 +62,7 @@ app.post('/api/create', async (req, res) => {
       });
     }
 
+    // Return the created URL details, including the full short URL
     res.status(201).json({
       data: {
         ...data,
@@ -70,14 +76,15 @@ app.post('/api/create', async (req, res) => {
   }
 });
 
+// Redirect endpoint for custom URLs
 app.get('/:alias', async (req, res) => {
   try {
     const { alias } = req.params;
     
-    // Get URL with exact case match
+    // Look up the custom URL by its alias
     const { data, error } = await supabase
       .from('custom_urls')
-      .select('original_url')
+      .select('original_url, id')
       .eq('custom_alias', alias)
       .single();
 
@@ -88,16 +95,30 @@ app.get('/:alias', async (req, res) => {
       `);
     }
 
-    // Atomic increment with exact case match
-    const { error: rpcError } = await supabase.rpc(
-      'increment_click_count_custom', 
-      { p_alias: alias }
-    );
+    // Extract IP and device information from the request headers
+    const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const userAgent = req.headers['user-agent'] || '';
+    const deviceType = /mobile/i.test(userAgent) ? 'Mobile' : 'Desktop';
 
-    if (rpcError) {
-      console.error('Click count error:', rpcError);
+    // For location, you can later integrate a server-side IP lookup;
+    // for now, we'll set it as 'Unknown'
+    const location = 'Unknown';
+
+    // Insert a new click event into the click_events table
+    const { error: clickError } = await supabase
+      .from('click_events')
+      .insert({
+        url_id: data.id,
+        url_type: 'custom',
+        location: location,
+        device_type: deviceType
+      });
+
+    if (clickError) {
+      console.error('Error inserting click event:', clickError);
     }
 
+    // Redirect to the original URL
     res.redirect(data.original_url);
 
   } catch (error) {
@@ -106,7 +127,7 @@ app.get('/:alias', async (req, res) => {
   }
 });
 
-// Health check
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok',
@@ -114,7 +135,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Error handling
+// Global error handling middleware
 app.use((err, req, res, next) => {
   console.error('Global Error:', err);
   res.status(500).json({
@@ -123,7 +144,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
+// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
