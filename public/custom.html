@@ -9,20 +9,20 @@
   <!-- Font Awesome & Google Fonts (Inter fallback) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <!-- Cabinet Grotesk Font Integration -->
+  <!-- Cabinet Grotesk Font Integration (Medium) -->
   <style>
-    /* Updated: Font files are now located at the root of your public folder */
     @font-face {
       font-family: 'Cabinet Grotesk';
-      src: url('/CabinetGrotesk-Regular.woff2') format('woff2'),
-           url('/CabinetGrotesk-Regular.woff') format('woff');
-      font-weight: normal;
+      src: url('/CabinetGrotesk-Medium.woff2?v=1') format('woff2'),
+           url('/CabinetGrotesk-Medium.woff?v=1') format('woff');
+      font-weight: 500;
       font-style: normal;
       font-display: swap;
     }
-    /* Apply Cabinet Grotesk as the primary font */
     body {
       font-family: 'Cabinet Grotesk', 'Inter', sans-serif;
+      /* Optionally enforce the medium weight */
+      font-weight: 500;
     }
   </style>
   <script>
