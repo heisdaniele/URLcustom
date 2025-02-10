@@ -9,14 +9,12 @@
   <!-- Font Awesome & Google Fonts (Inter fallback) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <!-- Chart.js (if needed elsewhere) -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Cabinet Grotesk Font Integration -->
   <style>
     @font-face {
       font-family: 'Cabinet Grotesk';
-      src: url('/fonts/CabinetGrotesk-Regular.woff2') format('woff2'),
-           url('/fonts/CabinetGrotesk-Regular.woff') format('woff');
+      src: url('/CabinetGrotesk-Regular.woff2') format('woff2'),
+           url('/CabinetGrotesk-Regular.woff') format('woff');
       font-weight: normal;
       font-style: normal;
       font-display: swap;
@@ -447,6 +445,7 @@
       // API request with ipinfo data included
       try {
         // Show loading state
+        const originalButtonText = elements.createButton.innerHTML;
         elements.createButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating...`;
         elements.createButton.disabled = true;
 
