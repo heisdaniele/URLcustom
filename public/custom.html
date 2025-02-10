@@ -4,32 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Midget Custom - Custom Branded URL Shortener</title>
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Font Awesome & Google Fonts (Inter fallback) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <!-- Cabinet Grotesk Font Integration (Medium) -->
-  <style>
-    @font-face {
-      font-family: 'Basel Grotesk Book';
-      src: url('/public/basel-grotesk-book-trial-webfont.woff2') format('woff2'),
-           url('/public/basel-grotesk-book-trial-webfont.woff') format('woff');
-      font-weight: 500;
-      font-style: normal;
-      font-display: swap;
-    }
-    body {
-      font-family: 'Basel Grostesk Book', 'Inter', sans-serif;
-      /* Optionally enforce the medium weight */
-      font-weight: 500;
-    }
-  </style>
   <script>
     tailwind.config = {
       theme: {
         fontFamily: {
-          sans: ['Basel Grotesk Book', 'Inter', 'sans-serif'],
+          sans: ['Inter', 'sans-serif'],
         },
         extend: {
           colors: {
@@ -447,7 +429,6 @@
       // API request with ipinfo data included
       try {
         // Show loading state
-        const originalButtonText = elements.createButton.innerHTML;
         elements.createButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating...`;
         elements.createButton.disabled = true;
 
@@ -526,4 +507,3 @@
   </script>
 </body>
 </html>
-
