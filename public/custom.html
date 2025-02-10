@@ -4,65 +4,65 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Midget Custom - Custom Branded URL Shortener</title>
-  
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Font Awesome & Google Fonts -->
+  <!-- Font Awesome & Google Fonts (Inter fallback) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  
-  <!-- Basel Grotesk Implementation (Updated) -->
+  <!-- Cabinet Grotesk Font Integration (Medium) -->
   <style>
-    /* Define the font-face for Basel Grotesk Book */
     @font-face {
       font-family: 'Basel Grotesk Book';
       src: url('/public/basel-grotesk-book-trial-webfont.woff2') format('woff2'),
            url('/public/basel-grotesk-book-trial-webfont.woff') format('woff');
-      font-weight: normal;
+      font-weight: 500;
       font-style: normal;
       font-display: swap;
     }
-    
-    /* Apply the custom font to all elements */
-    body, h1, h2, h3, h4, h5, h6, p, a, span, div, input, button, textarea {
-      font-family: 'Basel Grotesk Book', 'Inter', sans-serif !important;
-    }
-    
-    /* Increase base font size and line height for the body text */
     body {
-      font-size: 1.25rem;  /* 20px */
-      line-height: 2rem;   /* Adjust as needed */
-    }
-    
-    /* Make subtext lighter – applied to paragraphs, elements with the .subtext class, and feature card paragraphs */
-    p, .subtext, .feature-card p, .live-preview-text {
-      font-weight: 300 !important;
+      font-family: 'Basel Grostesk Book', 'Inter', sans-serif;
+      /* Optionally enforce the medium weight */
+      font-weight: 500;
     }
   </style>
-  
-  <!-- Updated Tailwind Config -->
   <script>
     tailwind.config = {
       theme: {
         fontFamily: {
           sans: ['Basel Grotesk Book', 'Inter', 'sans-serif'],
-          mono: ['Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace']
         },
         extend: {
           colors: {
             primary: '#6366f1',
             secondary: '#8b5cf6',
             dark: '#0f172a',
-            light: '#f8fafc'
-          }
-        }
-      }
+            light: '#f8fafc',
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'fade-in': 'fadeIn 0.5s ease-out',
+            'slide-up': 'slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+            'success-bounce': 'successBounce 0.8s ease-out',
+            'shake': 'shake 0.5s ease-in-out'
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' }
+            },
+            shake: {
+              '0%, 100%': { transform: 'translateX(0)' },
+              '25%': { transform: 'translateX(-5px)' },
+              '75%': { transform: 'translateX(5px)' },
+            },
+          },
+        },
+      },
     };
   </script>
-  
   <!-- Fetch IP information from ipinfo.io -->
   <script>
+    // Global variable to store ipinfo data
     let ipInfo = {};
     fetch('https://ipinfo.io/json?token=Yff1cc91f46cfa4')
       .then(response => response.json())
@@ -84,7 +84,7 @@
           <div class="p-2 bg-primary rounded-lg shadow-lg">
             <i class="fas fa-link text-white text-xl"></i>
           </div>
-          <span class="text-2xl font-bold text-dark">MIDGET Custom</span>
+          <span class="text-2xl font-bold text-dark">Midget Custom</span>
         </div>
         <!-- Desktop Menu -->
         <div class="hidden md:flex items-center space-x-8">
@@ -118,13 +118,14 @@
     </div>
   </nav>
   <script>
+    // Toggle mobile menu
     const mobileMenuButton = document.getElementById('mobile-menu');
     const mobileMenuLinksContainer = document.getElementById('mobile-menu-links');
     mobileMenuButton.addEventListener('click', () => {
       mobileMenuLinksContainer.classList.toggle('hidden');
     });
   </script>
-  
+
   <!-- Hero Section -->
   <section id="home" class="pt-32 pb-24 bg-gradient-to-b from-primary/5 to-light">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -206,7 +207,7 @@
       </div>
     </div>
   </section>
-  
+
   <!-- Features Section -->
   <section id="features" class="py-24 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -215,6 +216,7 @@
         <p class="text-slate-600 text-lg">Elevate your brand's presence with customized short URLs.</p>
       </div>
       <div class="grid md:grid-cols-3 gap-8">
+        <!-- Feature Card 1 -->
         <div class="feature-card p-8 bg-light rounded-2xl transition-all hover:transform hover:-translate-y-2 hover:shadow-xl">
           <div class="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6">
             <i class="fas fa-paint-brush text-3xl"></i>
@@ -222,6 +224,7 @@
           <h3 class="text-xl font-semibold text-dark mb-3">Brand Identity</h3>
           <p class="text-slate-600">Customize your links to reflect your brand’s unique style.</p>
         </div>
+        <!-- Feature Card 2 -->
         <div class="feature-card p-8 bg-light rounded-2xl transition-all hover:transform hover:-translate-y-2 hover:shadow-xl">
           <div class="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6">
             <i class="fas fa-users text-3xl"></i>
@@ -229,6 +232,7 @@
           <h3 class="text-xl font-semibold text-dark mb-3">Build Trust</h3>
           <p class="text-slate-600">Enhance credibility with links that carry your brand name.</p>
         </div>
+        <!-- Feature Card 3 -->
         <div class="feature-card p-8 bg-light rounded-2xl transition-all hover:transform hover:-translate-y-2 hover:shadow-xl">
           <div class="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6">
             <i class="fas fa-chart-line text-3xl"></i>
@@ -239,7 +243,7 @@
       </div>
     </div>
   </section>
-  
+
   <!-- Contact Section -->
   <section id="contact" class="py-24 bg-dark">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -252,17 +256,38 @@
           <form id="custom-contact-form" onsubmit="return handleCustomContactSubmit(event)" class="space-y-6">
             <div>
               <label class="block text-slate-300 mb-2 text-sm font-medium">Full Name</label>
-              <input type="text" id="custom-name" required class="w-full px-4 py-3 bg-white/5 border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-slate-200 placeholder-slate-400 transition-all" placeholder="John Doe">
+              <input 
+                type="text" 
+                id="custom-name" 
+                required
+                class="w-full px-4 py-3 bg-white/5 border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-slate-200 placeholder-slate-400 transition-all"
+                placeholder="John Doe"
+              >
             </div>
             <div>
               <label class="block text-slate-300 mb-2 text-sm font-medium">Email Address</label>
-              <input type="email" id="custom-email" required class="w-full px-4 py-3 bg-white/5 border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-slate-200 placeholder-slate-400 transition-all" placeholder="john@company.com">
+              <input 
+                type="email" 
+                id="custom-email" 
+                required
+                class="w-full px-4 py-3 bg-white/5 border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-slate-200 placeholder-slate-400 transition-all"
+                placeholder="john@company.com"
+              >
             </div>
             <div>
               <label class="block text-slate-300 mb-2 text-sm font-medium">Message</label>
-              <textarea id="custom-message" rows="5" required class="w-full px-4 py-3 bg-white/5 border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-slate-200 placeholder-slate-400 transition-all" placeholder="How can we assist you?"></textarea>
+              <textarea 
+                id="custom-message" 
+                rows="5" 
+                required
+                class="w-full px-4 py-3 bg-white/5 border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-slate-200 placeholder-slate-400 transition-all"
+                placeholder="How can we assist you?"
+              ></textarea>
             </div>
-            <button type="submit" class="w-full bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition-all font-medium flex items-center justify-center gap-2">
+            <button 
+              type="submit" 
+              class="w-full bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition-all font-medium flex items-center justify-center gap-2"
+            >
               <i class="fas fa-paper-plane"></i>
               Send Message
             </button>
@@ -271,11 +296,12 @@
       </div>
     </div>
   </section>
-  
+
   <!-- Footer -->
   <footer class="bg-dark text-slate-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div class="grid md:grid-cols-4 gap-8">
+        <!-- Brand Column -->
         <div class="space-y-4">
           <div class="flex items-center gap-3">
             <div class="p-2 bg-primary rounded-lg">
@@ -296,6 +322,7 @@
             </a>
           </div>
         </div>
+        <!-- Product Column -->
         <div>
           <h4 class="text-white font-semibold mb-4">Product</h4>
           <ul class="space-y-2 text-sm">
@@ -305,6 +332,7 @@
             <li><a href="#" class="hover:text-primary transition-colors">Integrations</a></li>
           </ul>
         </div>
+        <!-- Resources Column -->
         <div>
           <h4 class="text-white font-semibold mb-4">Resources</h4>
           <ul class="space-y-2 text-sm">
@@ -314,6 +342,7 @@
             <li><a href="#" class="hover:text-primary transition-colors">Status</a></li>
           </ul>
         </div>
+        <!-- Legal Column -->
         <div>
           <h4 class="text-white font-semibold mb-4">Legal</h4>
           <ul class="space-y-2 text-sm">
@@ -329,9 +358,10 @@
       </div>
     </div>
   </footer>
-  
+
   <!-- Inline JavaScript -->
   <script>
+    // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function(e) {
         e.preventDefault();
@@ -341,21 +371,24 @@
         }
       });
     });
-  
+
+    // Real-time alias sanitization
     function sanitizeAliasInput(input) {
       const originalValue = input.value;
       const sanitizedValue = originalValue
         .replace(/[^a-zA-Z0-9_-]/g, '-')
         .toLowerCase()
-        .substring(0, 50);
+        .substring(0, 50); // Enforce max length
       input.value = sanitizedValue;
       updateLivePreview();
     }
-  
+
+    // Live preview updater
     function updateLivePreview() {
       const aliasInput = document.getElementById('custom-alias-input');
       const livePreviewContainer = document.getElementById('live-preview-container');
       const livePreviewText = document.getElementById('live-preview-text');
+      
       if (aliasInput.value) {
         livePreviewText.textContent = `${window.location.origin}/${aliasInput.value}`;
         livePreviewContainer.classList.remove('hidden');
@@ -364,7 +397,8 @@
         livePreviewText.textContent = "";
       }
     }
-  
+
+    // URL creation with enhanced error handling and ipinfo data included
     async function generateCustomUrl() {
       const elements = {
         originalInput: document.getElementById('default-url-input'),
@@ -375,12 +409,18 @@
         shortUrlInput: document.getElementById('custom-short-url'),
         createButton: document.getElementById('create-custom-url-btn')
       };
+
+      // Clear previous states
       elements.defaultError.classList.add('hidden');
       elements.customError.classList.add('hidden');
       elements.resultContainer.classList.add('hidden');
+
+      // Validate inputs
       let valid = true;
       const originalUrl = elements.originalInput.value.trim();
       const alias = elements.aliasInput.value.trim();
+
+      // URL validation
       try {
         const url = new URL(originalUrl);
         if (!['http:', 'https:'].includes(url.protocol)) {
@@ -391,6 +431,8 @@
         elements.defaultError.classList.remove('hidden');
         valid = false;
       }
+
+      // Alias validation
       const aliasRegex = /^[a-z0-9_-]{3,50}$/;
       if (!aliasRegex.test(alias)) {
         elements.customError.textContent = "Alias must be 3-50 characters using only: a-z, 0-9, -, _";
@@ -399,10 +441,16 @@
         setTimeout(() => elements.aliasInput.classList.remove('animate-shake'), 500);
         valid = false;
       }
+
       if (!valid) return;
+
+      // API request with ipinfo data included
       try {
+        // Show loading state
+        const originalButtonText = elements.createButton.innerHTML;
         elements.createButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating...`;
         elements.createButton.disabled = true;
+
         const response = await fetch('/api/create', {
           method: 'POST',
           headers: { 
@@ -412,20 +460,25 @@
           body: JSON.stringify({
             original_url: originalUrl,
             custom_alias: alias,
-            ip_info: ipInfo
+            ip_info: ipInfo  // Include ipinfo data here
           })
         });
+
         const responseData = await response.json();
+
         if (!response.ok) {
           const errorMessage = responseData.error || `Request failed with status ${response.status}`;
           throw new Error(errorMessage);
         }
+
+        // Show success
         elements.shortUrlInput.value = `${window.location.origin}/${alias}`;
         elements.resultContainer.classList.remove('hidden');
         window.scrollTo({
           top: elements.resultContainer.offsetTop - 100,
           behavior: 'smooth'
         });
+
       } catch (error) {
         console.error("API Error:", error);
         elements.customError.textContent = error.message.includes('NetworkError') 
@@ -433,11 +486,13 @@
           : error.message;
         elements.customError.classList.remove('hidden');
       } finally {
+        // Reset button
         elements.createButton.innerHTML = `Create Custom URL`;
         elements.createButton.disabled = false;
       }
     }
-  
+
+    // Clipboard function
     async function copyCustomUrl() {
       try {
         const shortUrl = document.getElementById('custom-short-url');
@@ -449,21 +504,26 @@
         alert('Failed to copy URL. Please copy manually.');
       }
     }
-  
+
+    // Handle custom contact form submission
     function handleCustomContactSubmit(event) {
       event.preventDefault();
       const form = event.target;
       const submitButton = form.querySelector('button[type="submit"]');
+      
       submitButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sending...`;
       submitButton.disabled = true;
+  
       setTimeout(() => {
         submitButton.innerHTML = `<i class="fas fa-paper-plane"></i> Send Message`;
         submitButton.disabled = false;
         form.reset();
         alert('Thank you for your message! We\'ll respond within 24 hours.');
       }, 1500);
+  
       return false;
     }
   </script>
 </body>
 </html>
+
